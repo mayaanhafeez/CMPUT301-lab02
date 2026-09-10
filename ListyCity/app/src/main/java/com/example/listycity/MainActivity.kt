@@ -101,4 +101,9 @@ fun CityListScreen(
         Text("Add City")
       }
     }
+    LazyColumn(modifier=Modifier.fillMaxSize()) {
+      items(cities) {city->
+        CityRow(city=city)
+      }
+    }
   }
