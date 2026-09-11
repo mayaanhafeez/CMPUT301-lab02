@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -39,6 +42,13 @@ class CityRepository {
   fun addCity(city:String) {
     _cities.add(city)
   }
+
+fun deleteCity(city:String) {
+  if (city in _cities) {
+  _cities.remove(city)
+}
+}
+
 }
 
 class MainActivity : ComponentActivity() {
@@ -52,6 +62,7 @@ class MainActivity : ComponentActivity() {
           Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             CityListScreen(
               cities = cityRepository.cities,
+              onRemoveCity = {cityRepository.deleteCity(it)},
               onAddCity ={cityRepository.addCity(it)},
               modifier = Modifier.padding(innerPadding)
             )
@@ -63,23 +74,39 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun CityRow(city:String){
+fun CityRow(city:String, isSelected:Boolean, onTap: ()->Unit){
+
+  Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { onTap() }, // Simple tap tracking
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) CardDefaults.cardColors().containerColor else CardDefaults.cardColors().disabledContainerColor
+        )
+      ) {
+
   Text(
     text = city,
     fontSize =28.sp,
     modifier= Modifier
-    .fillMaxWidth()
     .padding(horizontal=18.dp, vertical=14.dp)
+    .clickable { onTap() },
+
   )
+}
 }
 
 @Composable
 fun CityListScreen(
   cities: List<String>,
   onAddCity: (String)->Unit,
+  onRemoveCity: (String)->Unit,
   modifier: Modifier= Modifier,
 ) {
+  var selectedItem by remember { mutableStateOf("") }
   var newCityName by remember {mutableStateOf("")}
+  // var deleteCityName by remember {mutableStateOf("")}
 
   Column(modifier=modifier.fillMaxSize()) {
     Row(modifier=Modifier.padding(16.dp)) {
@@ -102,10 +129,23 @@ fun CityListScreen(
       {
         Text("Add City")
       }
-    }
-    LazyColumn(modifier=Modifier.fillMaxSize()) {
-      items(cities) {city->
-        CityRow(city=city)
+
+      Button(
+        onClick={
+          if (selectedItem.isNotBlank()) {
+            onRemoveCity(selectedItem)
+            selectedItem = ""
+          }
+        }
+      )
+      {
+        Text("Remove City")
+      }
+
+      LazyColumn(modifier=Modifier.fillMaxSize()) {
+        items(cities) {city->
+          CityRow(city=city, isSelected = city == selectedItem, onTap = {selectedItem=city})
+      }
       }
     }
   }
